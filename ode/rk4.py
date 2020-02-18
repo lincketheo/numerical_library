@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
-
 class LinearEqu:
 
     def __init__(self, state_func, size, tolerance = 100000, start_state = None, time_step = 0.001):
