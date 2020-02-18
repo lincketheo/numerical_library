@@ -112,26 +112,26 @@ class LinearEqu:
 
         self.time = 0.0
 
-#  a = 16
-#  r = 25
-#  b = 4
+a = 16
+r = 900
+b = 4
 
 
-a = 0.398
-b = 2
-c = 4
+#  a = 0.398
+#  b = 2
+#  c = 4
 
-#  def func(state, t):
-#      xdot = a * (state[1] - state[0])
-#      ydot = r * state[0] - state[0] - state[0] * state[2]
-#      zdot = state[0] * state[1] - b * state[2]
-#      return np.array([xdot, ydot, zdot])
-#
-def func_rossler(state, t):
-    xdot = -(state[1] + state[2])
-    ydot = state[0] + a * state[1]
-    zdot = b + state[2] * (state[0] - c)
+def func(state, t):
+    xdot = a * (state[1] - state[0])
+    ydot = r * state[0] - state[0] - state[0] * state[2]
+    zdot = state[0] * state[1] - b * state[2]
     return np.array([xdot, ydot, zdot])
+
+#  def func_rossler(state, t):
+#      xdot = -(state[1] + state[2])
+#      ydot = state[0] + a * state[1]
+#      zdot = b + state[2] * (state[0] - c)
+#      return np.array([xdot, ydot, zdot])
 
 
 if __name__ == '__main__':
@@ -139,9 +139,10 @@ if __name__ == '__main__':
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    start = [-13, -12, 52]
+    #  start = [-13, -12, 52]
+    start = [100, 100, 100]
 
-    lorentz = LinearEqu(state_func = func_rossler, size = 3, tolerance = 30, start_state = start, time_step = 1)
+    lorentz = LinearEqu(state_func = func, size = 3, tolerance = 0.0001, start_state = start, time_step = 1)
     t, states = lorentz.ode(10000, True)
     #  lorentz.reset([-13, -12, 52])
     #  lorentz.h = 0.001
