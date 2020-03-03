@@ -23,8 +23,10 @@ class ODE:
         # Error handling for state_function
         if 'state' not in state_func.__code__.co_varnames:
             raise ValueError('Invalid function passed to ODE, must contain a \'state\' vector parameter')
+
         if 't' not in state_func.__code__.co_varnames:
             raise ValueError('Invalid function passed to ODE, must contain a \'t\' time parameter')
+
         if state_func.__code__.co_argcount > 2 and 'self' not in state_func.__code__.co_varnames:
             warnings.warn("State function passed takes more than 2 parameters while ODE assumes it takes 2")
 
@@ -37,11 +39,11 @@ class ODE:
 
         # Give self a start state (must mach size)
         if start_state == None or len(start_state) != self.size:
-            self.starting_state = np.zeros(self.size)
-            self.state = np.zeros(self.size)
+            self.starting_state = np.zeros(self.size, dtype=np.float64)
+            self.state = np.zeros(self.size, np.float64)
         else:
-            self.starting_state = np.array(start_state)
-            self.state = np.array(start_state)
+            self.starting_state = np.array(start_state, dtype=np.float64)
+            self.state = np.array(start_state, dtype=np.float64)
 
 
 
@@ -141,7 +143,7 @@ class ODE:
     # @return 
     def ode(self, n, adaptive_t = False, reset_on_end = True, verbose=False):
         time = np.zeros(n)
-        states = np.zeros(n * self.size).reshape(self.size, n)
+        states = np.zeros(n * self.size, dtype=np.float64).reshape(self.size, n)
 
         for i in range(n):
             self.step(adaptive_t)
@@ -206,17 +208,17 @@ class ODE:
             warnings.warn(f"Did not create enough elements: itterator = {i}")
 
         if ode_states:
-            return np.array(states_osc), np.array(states)
+            return np.array(states_osc, dtype=np.float64), np.array(states, dtype=np.float64)
 
         else:
-            return np.array(states_osc)
+            return np.array(states_osc, dtype=np.float64)
 
 
     def reset(self, start_state = None):
         if start_state == None or len(start_state) != self.size:
             self.state = self.starting_state
         else:
-            self.starting_state = np.array(start_state)
-            self.state = np.array(start_state)
+            self.starting_state = np.array(start_state, dtype=np.float64)
+            self.state = np.array(start_state, dtype=np.float64)
 
         self.time = 0.0
