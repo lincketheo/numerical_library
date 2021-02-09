@@ -8,11 +8,20 @@ if __name__ == '__main__':
     # The drive frequency
     alpha = 90
 
-    # Create a simple pendulum system
-    p = pendulum(beta = 0.01, l = 0.1, m = 0.1, g = 9.8, A = 99999, alpha = alpha)
+
+    # A simple pendulum being driven by a drive frequency equal to 90 HZ
+    # With drive frequency amplitude = A
+    p = pendulum(beta = 0.01, l = 0.1, m = 0.1, g = 9.8, A = 1, alpha = alpha)
 
     # Create a new ode with the pendulum state function 
-    a = ODE(state_func = p.state_func, size=2, start_state = [3, 2.5], time_step=0.0001)
+    a = ODE(state_func = p.state_func, size=2, start_state = [3, 2.5], time_step=0.001)
+    t, states = a.ode(10000)
+    plt.plot(states[0], states[1])
+    plt.show()
+
+
+    """
+    # THESE TAKE A LOT OF TIME - Creates a temporal slice
 
     # Create a temporal slice 
     states_osc = a.temporal_slice(n = 1000, T = np.pi * 2 / alpha , reset_on_end = False, verbose = True, max_states = 100000000)
@@ -25,4 +34,4 @@ if __name__ == '__main__':
     plt.ylabel("Angular Velocity (radians / s)")
     plt.legend()
     plt.show()
-
+    """
