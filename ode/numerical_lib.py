@@ -1,13 +1,177 @@
-import math     # Basic operations
+import math     # Basic operations - I didn't want to use numpy so its plug and play
 import cmath    # Complex sqrt
 import copy     # Deep copy for swaps
 
 
 
+############################ ODES ####################################################
+
+
+##
+# @brief An adaptive time stepping integrator
+#
+# @param f The ODE function
+# @param h The initial time step 
+# @param t0 The initial value of t
+# @param tf The final value of t
+# @param y0 The initial value of y
+# @param intfunc The integration function
+# @param tollerance Error bound for successive time steps (NOTE: this is not the distance between the actual solution, it is the error between one and two steps)
+# @param errfunc The error function (norm / metric)
+#
+# @return A list of (t, y) values
+def adaptive_integrator(f, h, t0, tf, y0, intfunc, tollerance, errfunc):
+    if errfunc == None:
+        errfunc = lambda y1, y2 : abs(y1 - y2)
+
+    y = y0
+    t = t0
+    vals = [(t0, y0)]
+
+    while t < tf:
+
+        y1 = intfunc(t, y, h) # One step forward
+        y2 = intfunc(t + h/2, intfunc(t, y, h/2), h/2) # Two steps forward
+        error = errfunc(y1, y2) # Compute the error
+        
+        max_recurse = 10
+        # Need to decrease step size
+        if(error > tollerance):
+            while error > tollerance and max_recurse > 0:
+                h = h / 2 # Decrease h
+
+                y1 = intfunc(t, y, h)
+                y2 = intfunc(t + h/2, intfunc(t, y, h/2), h/2)
+                error = errfunc(y1, y2)
+
+                max_recurse -= 1
+            if max_recurse <= 0:
+                print("Max depth in adaptive stepper exceeded downwards")
+            
+            if t + h >= tf:
+                h = tf - t
+
+            y = intfunc(t, y, h)
+            t += h
+
+        # Need to increase step size
+        elif(error <= tollerance):
+
+            if t + h >= tf:
+                h = tf - t
+
+            # Doing this first because this value is better (even though we need to increase)
+            y = intfunc(t, y, h)
+            t += h
+
+            while error < tollerance and max_recurse > 0 and t + h <= tf:
+                h = h * 2 # Increase h
+
+                y1 = intfunc(t, y, h) 
+                y2 = intfunc(t + h/2, intfunc(t, y, h/2), h/2)
+                error = errfunc(y1, y2)
+
+                max_recurse -= 1
+            if max_recurse <= 0:
+                print("Max depth in adaptive stepper exceeded upwards")
+
+        vals.append((t, y))
+    return vals
+    
+
+
+##
+# @brief A Generic integrator that can be used with all the other methds see examples below
+#
+# @param f y' function (f(y, t))
+# @param h Step size
+# @param t0 Initial t value
+# @param tf Final t value
+# @param y0 Initial y value
+# @param intfunc The integration function, takes in yn and tn and returns yn+1
+#
+# @return A list of tuples of (t, y)
+def generic_integrator(f, h, t0, tf, y0, intfunc):
+    assert h > 0
+    y = y0
+    t = t0
+    vals = [(t0, y0)]
+    n = (tf - t) / h
+    for i in range(int(n)):
+        y = intfunc(t, y, h)
+        t += h
+        vals.append((t, y))
+    return vals
+
+
+## EXAMPLES OF INTEGRATORS
+def eulers(f, h0, t0, tf, y0, tollerance = None, errfunc = None):
+    intfunc = lambda t, y, h : y + h * f(y, t)
+    if tollerance != None:
+        return adaptive_integrator(f, h0, t0, tf, y0, intfunc, tollerance, errfunc)
+    else:
+        return generic_integrator(f, h0, t0, tf, y0, intfunc)
+
+# f is a list of functions - first function is f(y, t) (y'), second is f'(y, t)... 
+def taylor_order_n(f: list, h0, t0, tf, y0, tollerance = None, errfunc = None):
+    Tn = lambda t, y, h : sum([(h**i)/math.factorial(i + 1) * f[i](y, t) for i in range(len(f))])
+    intfunc = lambda t, y, h: y + h * Tn(t, y, h)
+    if tollerance != None:
+        return adaptive_integrator(f, h0, t0, tf, y0, intfunc, tollerance, errfunc)
+    else:
+        return generic_integrator(f, h0, t0, tf, y0, intfunc)
+
+def midpoint(f, h0, t0, tf, y0, tollerance = None, errfunc = None):
+    intfunc = lambda t, y, h: y + h * f(y + h/2 * f(y, t), t + h/2)
+    if tollerance != None:
+        return adaptive_integrator(f, h0, t0, tf, y0, intfunc, tollerance, errfunc)
+    else:
+        return generic_integrator(f, h0, t0, tf, y0, intfunc)
+
+def modified_eulers(f, h0, t0, tf, y0, tollerance = None, errfunc = None):
+    intfunc = lambda t, y, h: y + h/2 * (f(y, t) + f(y + h * f(y, h), t + h))
+    if tollerance != None:
+        return adaptive_integrator(f, h0, t0, tf, y0, intfunc, tollerance, errfunc)
+    else:
+        return generic_integrator(f, h0, t0, tf, y0, intfunc)
+
+def rk2(f, h0, t0, tf, y0, tollerance = None, errfunc = None):
+    intfunc = lambda t, y, h : y + h * f(y + h/2 * f(y, t), t + h/2)
+    if tollerance != None:
+        return adaptive_integrator(f, h0, t0, tf, y0, intfunc, tollerance, errfunc)
+    else:
+        return generic_integrator(f, h0, t0, tf, y0, intfunc)
+
+def huens(f, h0, t0, tf, y0, tollerance = None, errfunc = None):
+    intfunc = lambda t, y, h : y + h/4 * (f(y, t) + 3 * f(y + 2*h/3 * f(y + h/3 * f(y, t), t + h/3), t + 2*h/3))
+    if tollerance != None:
+        return adaptive_integrator(f, h0, t0, tf, y0, intfunc, tollerance, errfunc)
+    else:
+        return generic_integrator(f, h0, t0, tf, y0, intfunc)
+
+def rk4(f, h0, t0, tf, y0, tollerance = None, errfunc = None):
+    def intfunc(t, y, h):
+        k1 = h * f(y, t)
+        k2 = h * f(y + 1/2 * k1, t + h/2)
+        k3 = h * f(y + 1/2 * k2, t + h/2)
+        k4 = h * f(y + k3, t + h)
+        return y + 1/6 * (k1 + 2*k2 + 2*k3 + k4)
+    if tollerance != None:
+        return adaptive_integrator(f, h0, t0, tf, y0, intfunc, tollerance, errfunc)
+    else:
+        return generic_integrator(f, h0, t0, tf, y0, intfunc)
 
 
 
 ############################## Integration ############################################
+##
+# @brief Numerical Integrator
+#
+# @param f The function to integrate
+# @param (a, b) The domain of the integral
+# @param n The number of steps to use
+#
+# @return Integral from a to b of f
 def trapezoid_integration(f, a, b, n):
     h = (b - a) / n
     acc = 0
@@ -15,6 +179,8 @@ def trapezoid_integration(f, a, b, n):
         acc += f(a + i * h)
     return (h / 2) * (f(a) + 2 * acc + f(b))
 
+##
+# @brief See trapezoid description
 def simpsons_integration(f, a, b, n):
     h = (b - a)/n
     acc1 = 0
@@ -26,6 +192,8 @@ def simpsons_integration(f, a, b, n):
             acc2 += f(a + i * h)
     return (h/3) * (f(a) + 2 * acc1 + 4 * acc2 + f(b))
 
+##
+# @brief See trapezoid description
 def midpoint_integration(f, a, b, n):
     assert n % 2 == 0
     h = (b - a) / (n + 2)
@@ -33,9 +201,6 @@ def midpoint_integration(f, a, b, n):
     for i in range(0, n//2 + 1):
         acc += f(a + (2 * i + 1) * h)
     return 2 * h * acc
-
-
-
 
 
 
@@ -121,8 +286,6 @@ def clamped_cubic_spline(x0 : list, y0 : list, fpx0 : float, fpxn : float):
         ret[i][3] = (ret[i + 1][2] - ret[i][2]) / (3 * h[i])
 
     return ret[0:-1]
-
-
 
 
 
@@ -559,7 +722,6 @@ def horners_method(degree, coef, x0):
 
 
 
-
 ############################################### UTILITY ################################
 # A Few Clean Printing methods
 def problem(name):
@@ -593,4 +755,3 @@ def poly_print_factored(zeros):
     for i in zeros:
         ret += f"(x-{i:.3f})" # assuming conjigate exists, so x - a + b and x - a - b are swapped
     return ret
-
