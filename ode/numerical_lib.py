@@ -6,6 +6,13 @@ import copy     # Deep copy for swaps
 
 ############################ ODES ####################################################
 
+def err_func_default(y1, y2):
+    if type(y1) == int and type(y2) == int:
+        return abs(y1 - y2)
+    try:
+        return math.sqrt(sum([(a - b)**2 for a, b in zip(y1, y2)]))
+    except:
+        print("Unknown func")
 
 ##
 # @brief An adaptive time stepping integrator
@@ -22,11 +29,12 @@ import copy     # Deep copy for swaps
 # @return A list of (t, y) values
 def adaptive_integrator(f, h, t0, tf, y0, intfunc, tollerance, errfunc):
     if errfunc == None:
-        errfunc = lambda y1, y2 : abs(y1 - y2)
+        errfunc = err_func_default
 
     y = y0
     t = t0
-    vals = [(t0, y0)]
+    tvals = []
+    yvals = []
 
     while t < tf:
 
@@ -75,8 +83,9 @@ def adaptive_integrator(f, h, t0, tf, y0, intfunc, tollerance, errfunc):
             if max_recurse <= 0:
                 print("Max depth in adaptive stepper exceeded upwards")
 
-        vals.append((t, y))
-    return vals
+        tvals.append(t)
+        yvals.append(y)
+    return tvals, yvals
     
 
 
@@ -95,13 +104,15 @@ def generic_integrator(f, h, t0, tf, y0, intfunc):
     assert h > 0
     y = y0
     t = t0
-    vals = [(t0, y0)]
+    tvals = []
+    yvals = []
     n = (tf - t) / h
     for i in range(int(n)):
         y = intfunc(t, y, h)
         t += h
-        vals.append((t, y))
-    return vals
+        tvals.append(t)
+        yvals.append(y)
+    return tvals, yvals
 
 
 ## EXAMPLES OF INTEGRATORS
