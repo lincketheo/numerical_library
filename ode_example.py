@@ -20,8 +20,7 @@ if __name__ == '__main__':
     plt.show()
 
 
-    """
-    # THESE TAKE A LOT OF TIME - Creates a temporal slice
+    # THESE USUALLY TAKE A LOT OF TIME - Creates a temporal slice
 
     # Create a temporal slice 
     states_osc = a.temporal_slice(n = 1000, T = np.pi * 2 / alpha , reset_on_end = False, verbose = True, max_states = 100000000)
@@ -34,4 +33,3 @@ if __name__ == '__main__':
     plt.ylabel("Angular Velocity (radians / s)")
     plt.legend()
     plt.show()
-    """

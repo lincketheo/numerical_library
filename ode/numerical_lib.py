@@ -2,8 +2,6 @@ import math     # Basic operations - I didn't want to use numpy so its plug and 
 import cmath    # Complex sqrt
 import copy     # Deep copy for swaps
 
-
-
 ############################ ODES ####################################################
 
 def err_func_default(y1, y2):
@@ -18,7 +16,7 @@ def err_func_default(y1, y2):
 # @brief An adaptive time stepping integrator
 #
 # @param f The ODE function
-# @param h The initial time step 
+# @param h The initial time step
 # @param t0 The initial value of t
 # @param tf The final value of t
 # @param y0 The initial value of y
@@ -41,7 +39,7 @@ def adaptive_integrator(f, h, t0, tf, y0, intfunc, tollerance, errfunc):
         y1 = intfunc(t, y, h) # One step forward
         y2 = intfunc(t + h/2, intfunc(t, y, h/2), h/2) # Two steps forward
         error = errfunc(y1, y2) # Compute the error
-        
+
         max_recurse = 10
         # Need to decrease step size
         if(error > tollerance):
@@ -55,14 +53,14 @@ def adaptive_integrator(f, h, t0, tf, y0, intfunc, tollerance, errfunc):
                 max_recurse -= 1
             if max_recurse <= 0:
                 print("Max depth in adaptive stepper exceeded downwards")
-            
+
             if t + h >= tf:
                 h = tf - t
 
             y = intfunc(t, y, h)
             t += h
 
-        # Need to increase step size
+            # Need to increase step size
         elif(error <= tollerance):
 
             if t + h >= tf:
@@ -75,7 +73,7 @@ def adaptive_integrator(f, h, t0, tf, y0, intfunc, tollerance, errfunc):
             while error < tollerance and max_recurse > 0 and t + h <= tf:
                 h = h * 2 # Increase h
 
-                y1 = intfunc(t, y, h) 
+                y1 = intfunc(t, y, h)
                 y2 = intfunc(t + h/2, intfunc(t, y, h/2), h/2)
                 error = errfunc(y1, y2)
 
@@ -86,7 +84,7 @@ def adaptive_integrator(f, h, t0, tf, y0, intfunc, tollerance, errfunc):
         tvals.append(t)
         yvals.append(y)
     return tvals, yvals
-    
+
 
 
 ##
@@ -123,7 +121,7 @@ def eulers(f, h0, t0, tf, y0, tollerance = None, errfunc = None):
     else:
         return generic_integrator(f, h0, t0, tf, y0, intfunc)
 
-# f is a list of functions - first function is f(y, t) (y'), second is f'(y, t)... 
+# f is a list of functions - first function is f(y, t) (y'), second is f'(y, t)...
 def taylor_order_n(f: list, h0, t0, tf, y0, tollerance = None, errfunc = None):
     Tn = lambda t, y, h : sum([(h**i)/math.factorial(i + 1) * f[i](y, t) for i in range(len(f))])
     intfunc = lambda t, y, h: y + h * Tn(t, y, h)
@@ -236,7 +234,7 @@ def natural_cubic_spline(x0 : list, y0 : list):
 
     h = [x0[i + 1] - x0[i] for i in range(len(x0) - 1)]
     alpha = [3/h[i] * (y0[i + 1] - y0[i]) - 3/h[i - 1] * (y0[i] - y0[i - 1]) for i in range(1, len(x0) - 1)]
-    
+
     l = [0 for i in range(len(x0))]; l[0] = 1
     mu = [0 for i in range(len(x0))]; mu[0] = 0
     z = [0 for i in range(len(x0))]; z[0] = 0
@@ -277,7 +275,7 @@ def clamped_cubic_spline(x0 : list, y0 : list, fpx0 : float, fpxn : float):
 
     for i in range(1, len(x0) - 1):
         alpha[i] = (3 / h[i]) * (y0[i + 1] - y0[i]) - (3 / h[i - 1]) * (y0[i] - y0[i - 1])
-    
+
     l = [0 for i in range(len(x0))]; l[0] = 2 * h[0]
     mu = [0 for i in range(len(x0))]; mu[0] = 0.5
     z = [0 for i in range(len(x0))]; z[0] = alpha[0]/l[0]
@@ -320,7 +318,7 @@ def hermite(x0 : list, y0 : list, yprime0 : list, x = None):
         Q[2 * i][0] = y0[i]
         Q[2 * i + 1][0] = y0[i]
         Q[2 * i + 1][1] = yprime0[i]
-        
+
         if i != 0:
             Q[2 * i][1] = (Q[2 * i][0] - Q[2 * i - 1][0])/(z[2 * i] - z[2 * i - 1])
     for i in range(2, 2 * len(x0)):
@@ -331,7 +329,7 @@ def hermite(x0 : list, y0 : list, yprime0 : list, x = None):
     if x == None:
         return coefs, z
     return coefs, divdiff_hermite_eval(coefs, x, z), z
-        
+
 
 ##
 # @brief Divided Difference Method
@@ -355,17 +353,17 @@ def divdiff_newton(x0: list, y0: list, x):
     # F[0] := [y0]
     # F[1] := [y1, 0]
     F = [[(y0[i] if j == 0 else 0) for j in range(i + 1)] for i in range(len(y0))]
-    
+
     for i in range(1, len(x0)):
         for j in range(1, i + 1):
             F[i][j] = (F[i][j-1] - F[i-1][j-1])/(x0[i]-x0[i-j])
 
     coefs = [F[i][i] for i in range(len(F))]
-    
+
     # If no x to evaluate specified, just return coefficients
     if x == None:
         return coefs
-    
+
     return coefs, divdiff_eval(coefs, x, x0)
 
 ##
@@ -387,7 +385,7 @@ def divdiff_eval(coefs, x, x0):
 ##
 # @brief This is the same thing as divdiff eval - just caled it hermite
 #
-# @param coefs Div Diff coefficients 
+# @param coefs Div Diff coefficients
 # @param x The value of x to eval
 # @param z0 List of x0 values
 #
@@ -410,8 +408,8 @@ def divdiff_hermite_eval(coefs, x, z0):
 # @param y0 Data in
 #
 # @return table
-def nevilles(x, x0: list, y0: list): 
-    
+def nevilles(x, x0: list, y0: list):
+
     assert len(x0) == len(y0)
     Q = [[(y0[i] if j == 0 else 0) for j in range(i + 1)] for i in range(len(y0))]
     print(Q)
@@ -459,16 +457,16 @@ class Horner_Polynomial:
 
 
     ##
-    # @brief Evaluate self at x if x is unique 
+    # @brief Evaluate self at x if x is unique
     # @param x The value to evaluate at
     def __eval(self, x):
         if x == self.last_x:
-            return 
+            return
         self.last_x = x
         self.y, self.yp = horners(len(self.coefs) - 1, self.coefs, x)
 
     ##
-    # @brief Compute the roots using horners and newtons 
+    # @brief Compute the roots using horners and newtons
     #
     # @param list A list of initial starting points. Note that the polynomial is
     # reduced every step, so it is not a problem to repeat values for x
@@ -541,7 +539,7 @@ def horners(n: int, coef: list, x0: float, save_Q = False):
 # @brief Evaluates a polynomial like horners but with complex values
 #
 # @param a Horner Polynomial class
-# @param p0 starting point0 
+# @param p0 starting point0
 # @param p1 starting point1
 # @param p2 starting point2
 # @param tol Tollerance
@@ -603,24 +601,24 @@ least one
 """
 
 def bisection_method(f, a0, b0, tol = 0, n = float('inf'), verbose = False):
-    middle = (a0 + b0) / 2              
+    middle = (a0 + b0) / 2
     fa, fb, fm = f(a0), f(b0), f(middle)
-    
-    assert b0 > a0                          
-    assert fa * fb < 0                      
+
+    assert b0 > a0
+    assert fa * fb < 0
 
     # Termination
-    if n <= 1 or abs(fm) < tol: 
+    if n <= 1 or abs(fm) < tol:
         return middle, abs(fm)
 
     # Recursive Call
     a0, b0 = (middle, b0) if fb * fm < 0 else (a0, middle)
-    return bisection_method(f, a0, b0, tol, n - 1) 
+    return bisection_method(f, a0, b0, tol, n - 1)
 
 def fixed_point_method(f, a0, tol = 0, n = float('inf'), verbose = False):
     try:
         fa = f(a0)
-    except OverflowError: 
+    except OverflowError:
         print("Sequence does not converge")
         return float('inf'), float('inf')
 
@@ -643,9 +641,9 @@ def newtons_method(f, f_prime, p0, tol = 0, n = float('inf'), verbose = False):
     except ZeroDivisionError:
         print("Did not satisfy second condition for newton's convergence")
         return None, None
-    
+
     # Termination
-    if n <= 1 or abs(p - p0) < tol: 
+    if n <= 1 or abs(p - p0) < tol:
         return p, abs(p - p0)
 
     # Recursive Call
@@ -663,9 +661,9 @@ def newtons_2_13_method(f, f_prime, f_double_prime, p0, tol = 0, n = float('inf'
     except ZeroDivisionError:
         print("Did not satisfy second condition for newton's convergence")
         return None, None
-    
+
     # Termination
-    if n <= 1 or abs(p - p0) < tol: 
+    if n <= 1 or abs(p - p0) < tol:
         return p, abs(p - p0)
 
     # Recursive Call
@@ -732,13 +730,7 @@ def horners_method(degree, coef, x0):
     return __recurs(coef[0], coef[0])
 
 
-
 ############################################### UTILITY ################################
-# A Few Clean Printing methods
-def problem(name):
-    print("\n===============================")
-    print("Problem: ", name)
-
 # Prints a polynomial as coefficients
 def poly_print(coef):
     ret = ""

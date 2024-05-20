@@ -11,8 +11,8 @@ class rossler:
 
     def state_func(self, state, t):
         xdot = -(state[1] + state[2])
-        ydot = state[0] + a * state[1]
-        zdot = b + state[2] * (state[0] - c)
+        ydot = state[0] + self.a * state[1]
+        zdot = self.b + state[2] * (state[0] - self.c)
         return np.array([xdot, ydot, zdot], dtype=np.float64)
 
 
